@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(250, 20%, 98%);
+  --foreground: hsl(210, 40%, 8%);
+  --muted: hsl(210, 40%, 96%);
+  --muted-foreground: hsl(215, 16%, 47%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(210, 40%, 8%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(210, 40%, 8%);
+  --border: hsl(214, 32%, 91%);
+  --input: hsl(214, 32%, 91%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(215, 16%, 47%);
+  --secondary-foreground: hsl(210, 40%, 8%);
+  --accent: hsl(210, 40%, 96%);
+  --accent-foreground: hsl(210, 40%, 8%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(60, 9%, 98%);
+  --success: hsl(142, 71%, 45%);
+  --success-foreground: hsl(60, 9%, 98%);
+  --warning: hsl(36, 100%, 50%);
+  --warning-foreground: hsl(60, 9%, 98%);
+  --surface: hsl(0, 0%, 100%);
+  --ring: hsl(207, 90%, 54%);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: hsl(240, 10%, 4%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 4%, 16%);
+  --muted-foreground: hsl(240, 5%, 65%);
+  --popover: hsl(240, 10%, 4%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 4%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 4%, 16%);
+  --input: hsl(240, 4%, 16%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 4%, 16%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 4%, 16%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 63%, 31%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --success: hsl(142, 71%, 45%);
+  --success-foreground: hsl(60, 9%, 98%);
+  --warning: hsl(36, 100%, 50%);
+  --warning-foreground: hsl(60, 9%, 98%);
+  --surface: hsl(240, 10%, 4%);
+  --ring: hsl(240, 5%, 84%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .text-secondary {
+    color: hsl(215, 16%, 47%);
+  }
+  
+  .text-success {
+    color: hsl(142, 71%, 45%);
+  }
+  
+  .text-warning {
+    color: hsl(36, 100%, 50%);
+  }
+  
+  .bg-success {
+    background-color: hsl(142, 71%, 45%);
+  }
+  
+  .bg-warning {
+    background-color: hsl(36, 100%, 50%);
+  }
+  
+  .bg-surface {
+    background-color: hsl(0, 0%, 100%);
+  }
+  
+  .dark .bg-surface {
+    background-color: hsl(240, 10%, 4%);
+  }
+  
+  .border-success {
+    border-color: hsl(142, 71%, 45%);
+  }
+  
+  .border-warning {
+    border-color: hsl(36, 100%, 50%);
+  }
+}
