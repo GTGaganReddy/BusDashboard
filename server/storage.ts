@@ -167,6 +167,10 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
+    // Trigger OR tools synchronization
+    const { triggerORToolsSync } = await import('./sync-or-tools');
+    await triggerORToolsSync();
+    
     return results;
   }
 

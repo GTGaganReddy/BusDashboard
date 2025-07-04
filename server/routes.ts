@@ -207,6 +207,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // OR Tools sync configuration and testing endpoints
+  app.post("/api/or-tools/configure", async (req, res) => {
+    try {
+      const { baseUrl, apiKey, authHeader } = req.body;
+      
+      if (!baseUrl) {
+        return res.status(400).json({ error: "baseUrl is required" });
+      }
+      
+      const { initializeORToolsSync } = await import('./sync-or-tools');
+      const syncInstance = initializeORToolsSync({
+        baseUrl,
+        apiKey,
+        authHeader,
+      });
+      
+      res.json({ 
+        message: "OR Tools sync configured successfully",
+        baseUrl,
+        configured: true
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to configure OR Tools sync" });
+    }
+  });
+
+  // Test OR Tools connection
+  app.post("/api/or-tools/test", async (req, res) => {
+    try {
+      const { getORToolsSync } = await import('./sync-or-tools');
+      const syncInstance = getORToolsSync();
+      
+      if (!syncInstance) {
+        return res.status(400).json({ error: "OR Tools sync not configured" });
+      }
+      
+      // Test connection by fetching driver hours
+      await syncInstance.fetchORToolsDriverHours();
+      
+      res.json({ 
+        message: "OR Tools connection successful",
+        success: true
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        error: "OR Tools connection failed",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Manual sync trigger
+  app.post("/api/or-tools/sync", async (req, res) => {
+    try {
+      const { getORToolsSync } = await import('./sync-or-tools');
+      const syncInstance = getORToolsSync();
+      
+      if (!syncInstance) {
+        return res.status(400).json({ error: "OR Tools sync not configured" });
+      }
+      
+      const result = await syncInstance.performSync();
+      
+      res.json({
+        message: `Sync completed: ${result.updatedCount} drivers updated`,
+        success: result.success,
+        updatedCount: result.updatedCount,
+        updates: result.updates
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Manual sync failed",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Get sync status
+  app.get("/api/or-tools/status", async (req, res) => {
+    try {
+      const { getORToolsSync } = await import('./sync-or-tools');
+      const syncInstance = getORToolsSync();
+      
+      res.json({
+        configured: syncInstance !== null,
+        lastSync: syncInstance ? new Date().toISOString() : null
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get sync status" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
