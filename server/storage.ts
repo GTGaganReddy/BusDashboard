@@ -132,20 +132,73 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateAssignment(id: number, insertAssignment: Partial<InsertAssignment>): Promise<Assignment | undefined> {
+    // Get the old assignment to check if driver changed
+    const [oldAssignment] = await db
+      .select()
+      .from(assignments)
+      .where(eq(assignments.id, id))
+      .limit(1);
+    
     const [assignment] = await db
       .update(assignments)
       .set(insertAssignment)
       .where(eq(assignments.id, id))
       .returning();
+    
+    // If assignment was updated, check if we need to update driver hours
+    if (assignment) {
+      const driversToUpdate = new Set<string>();
+      
+      // If old assignment had a driver, update their hours
+      if (oldAssignment?.driverName) {
+        driversToUpdate.add(oldAssignment.driverName);
+      }
+      
+      // If new assignment has a driver, update their hours
+      if (assignment.driverName) {
+        driversToUpdate.add(assignment.driverName);
+      }
+      
+      // Update all affected drivers
+      for (const driverName of driversToUpdate) {
+        await this.updateDriverRemainingHours(driverName);
+      }
+      
+      // Trigger OR tools synchronization if any drivers were affected
+      if (driversToUpdate.size > 0) {
+        const { triggerORToolsSync } = await import('./sync-or-tools');
+        await triggerORToolsSync();
+      }
+    }
+    
     return assignment || undefined;
   }
 
   async deleteAssignment(id: number): Promise<boolean> {
+    // Get the assignment before deleting to know which driver to update
+    const [assignmentToDelete] = await db
+      .select()
+      .from(assignments)
+      .where(eq(assignments.id, id))
+      .limit(1);
+    
     const result = await db
       .delete(assignments)
       .where(eq(assignments.id, id))
       .returning();
-    return result.length > 0;
+    
+    const deleted = result.length > 0;
+    
+    // If assignment was deleted and had a driver, update their remaining hours
+    if (deleted && assignmentToDelete?.driverName) {
+      await this.updateDriverRemainingHours(assignmentToDelete.driverName);
+      
+      // Trigger OR tools synchronization
+      const { triggerORToolsSync } = await import('./sync-or-tools');
+      await triggerORToolsSync();
+    }
+    
+    return deleted;
   }
 
   async createBulkAssignments(insertAssignments: InsertAssignment[]): Promise<Assignment[]> {
