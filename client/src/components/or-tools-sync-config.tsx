@@ -276,10 +276,10 @@ export default function ORToolsSyncConfig() {
 
         {/* API Endpoints Info */}
         <div className="p-3 bg-muted rounded-lg">
-          <h5 className="text-sm font-medium mb-2">Expected OR Tools API Endpoints:</h5>
+          <h5 className="text-sm font-medium mb-2">OR Tools API Endpoints Used:</h5>
           <div className="text-xs text-muted-foreground space-y-1">
-            <div>GET /api/drivers/hours - Fetch current driver hours</div>
-            <div>POST /api/drivers/hours/sync - Update driver hours</div>
+            <div>GET /drivers - Fetch current driver hours</div>
+            <div>PUT /drivers/&lt;name&gt; - Update individual driver hours</div>
           </div>
         </div>
       </CardContent>

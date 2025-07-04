@@ -49,7 +49,7 @@ export class ORToolsSync {
         headers['Authorization'] = this.config.authHeader;
       }
       
-      const response = await fetch(`${this.config.baseUrl}/api/drivers/hours`, {
+      const response = await fetch(`${this.config.baseUrl}/drivers`, {
         method: 'GET',
         headers,
       });
@@ -61,10 +61,15 @@ export class ORToolsSync {
       const data = await response.json();
       const orToolsHours = new Map<string, number>();
       
-      // Assuming OR tools returns format: [{ driverName: string, remainingHours: number }]
+      // Based on your OR Tools app structure
       if (Array.isArray(data)) {
         for (const driver of data) {
-          orToolsHours.set(driver.driverName, driver.remainingHours);
+          // Assuming your /drivers endpoint returns drivers with remaining_hours field
+          orToolsHours.set(driver.name, driver.remaining_hours || driver.remainingHours || 0);
+        }
+      } else if (data.drivers && Array.isArray(data.drivers)) {
+        for (const driver of data.drivers) {
+          orToolsHours.set(driver.name, driver.remaining_hours || driver.remainingHours || 0);
         }
       }
       
@@ -122,25 +127,26 @@ export class ORToolsSync {
         headers['Authorization'] = this.config.authHeader;
       }
       
-      const payload = {
-        driverUpdates: updates.map(update => ({
-          driverName: update.driverName,
-          remainingHours: update.newRemainingHours,
-        })),
-        syncTimestamp: new Date().toISOString(),
-      };
-      
-      const response = await fetch(`${this.config.baseUrl}/api/drivers/hours/sync`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
+      // Use your OR Tools API - update each driver individually using PUT /drivers/<name>
+      const updatePromises = updates.map(async (update) => {
+        const response = await fetch(`${this.config.baseUrl}/drivers/${encodeURIComponent(update.driverName)}`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({
+            remaining_hours: update.newRemainingHours,
+            // Include any other fields your OR Tools app expects
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to update driver ${update.driverName}: ${response.status}`);
+        }
+        
+        return response.json();
       });
       
-      if (!response.ok) {
-        throw new Error(`OR Tools sync failed with status: ${response.status}`);
-      }
+      await Promise.all(updatePromises);
       
-      const result = await response.json();
       console.log(`Successfully synced ${updates.length} driver updates to OR tools:`, 
                   updates.map(u => `${u.driverName}: ${u.currentHours} → ${u.newRemainingHours}`));
       
