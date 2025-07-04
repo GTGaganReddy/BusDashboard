@@ -35,6 +35,11 @@ export const insertRouteSchema = createInsertSchema(routes).omit({
 
 export const insertAssignmentSchema = createInsertSchema(assignments).omit({
   id: true,
+}).extend({
+  assignedDate: z.union([
+    z.string().transform((str) => new Date(str)),
+    z.date()
+  ]),
 });
 
 export type Driver = typeof drivers.$inferSelect;

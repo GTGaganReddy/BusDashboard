@@ -114,7 +114,11 @@ export class MemStorage implements IStorage {
 
   async createDriver(insertDriver: InsertDriver): Promise<Driver> {
     const id = this.currentDriverId++;
-    const driver: Driver = { ...insertDriver, id };
+    const driver: Driver = { 
+      ...insertDriver, 
+      id,
+      status: insertDriver.status || "active"
+    };
     this.drivers.set(id, driver);
     return driver;
   }
@@ -172,7 +176,13 @@ export class MemStorage implements IStorage {
 
   async createAssignment(insertAssignment: InsertAssignment): Promise<Assignment> {
     const id = this.currentAssignmentId++;
-    const assignment: Assignment = { ...insertAssignment, id };
+    const assignment: Assignment = { 
+      id,
+      routeId: insertAssignment.routeId,
+      driverId: insertAssignment.driverId || null,
+      assignedDate: insertAssignment.assignedDate,
+      status: insertAssignment.status || "pending"
+    };
     this.assignments.set(id, assignment);
     return assignment;
   }
@@ -195,7 +205,13 @@ export class MemStorage implements IStorage {
     
     for (const insertAssignment of insertAssignments) {
       const id = this.currentAssignmentId++;
-      const assignment: Assignment = { ...insertAssignment, id };
+      const assignment: Assignment = { 
+        id,
+        routeId: insertAssignment.routeId,
+        driverId: insertAssignment.driverId || null,
+        assignedDate: insertAssignment.assignedDate,
+        status: insertAssignment.status || "pending"
+      };
       this.assignments.set(id, assignment);
       assignments.push(assignment);
     }
