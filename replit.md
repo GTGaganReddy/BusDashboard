@@ -42,9 +42,10 @@ The system uses three main entities:
 - **SummaryCards**: Shows key metrics like total routes, active drivers, and hours
 
 ### Backend Services
-- **Storage Layer**: Abstract interface with in-memory implementation for data persistence
+- **Storage Layer**: Abstract interface with PostgreSQL database implementation for persistent data storage
 - **Route Handlers**: RESTful endpoints for managing drivers, routes, and assignments
 - **Validation**: Zod schemas for request/response validation
+- **Database**: PostgreSQL with Drizzle ORM for type-safe database operations
 
 ## Data Flow
 
@@ -106,4 +107,6 @@ Preferred communication style: Simple, everyday language.
 ## Changelog
 
 Changelog:
-- July 04, 2025. Initial setup
+- July 04, 2025. Initial setup with in-memory storage
+- July 04, 2025. Added PostgreSQL database with persistent storage, seeded with sample data
+- July 04, 2025. Successfully tested POST requests for assignment data storage and retrieval

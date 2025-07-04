@@ -10,6 +10,8 @@ import {
   type InsertAssignment,
   type RouteAssignmentView
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   // Driver operations
@@ -220,4 +222,124 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getDrivers(): Promise<Driver[]> {
+    return await db.select().from(drivers);
+  }
+
+  async getDriver(id: number): Promise<Driver | undefined> {
+    const [driver] = await db.select().from(drivers).where(eq(drivers.id, id));
+    return driver || undefined;
+  }
+
+  async createDriver(insertDriver: InsertDriver): Promise<Driver> {
+    const [driver] = await db
+      .insert(drivers)
+      .values(insertDriver)
+      .returning();
+    return driver;
+  }
+
+  async updateDriver(id: number, insertDriver: Partial<InsertDriver>): Promise<Driver | undefined> {
+    const [driver] = await db
+      .update(drivers)
+      .set(insertDriver)
+      .where(eq(drivers.id, id))
+      .returning();
+    return driver || undefined;
+  }
+
+  async getRoutes(): Promise<Route[]> {
+    return await db.select().from(routes);
+  }
+
+  async getRoute(id: number): Promise<Route | undefined> {
+    const [route] = await db.select().from(routes).where(eq(routes.id, id));
+    return route || undefined;
+  }
+
+  async createRoute(insertRoute: InsertRoute): Promise<Route> {
+    const [route] = await db
+      .insert(routes)
+      .values(insertRoute)
+      .returning();
+    return route;
+  }
+
+  async getAssignments(): Promise<Assignment[]> {
+    return await db.select().from(assignments);
+  }
+
+  async getAssignmentsByDateRange(startDate: Date, endDate: Date): Promise<RouteAssignmentView[]> {
+    const result = await db
+      .select({
+        id: assignments.id,
+        routeNumber: routes.routeNumber,
+        routeDescription: routes.description,
+        routeHours: routes.hoursRequired,
+        driverId: assignments.driverId,
+        driverName: drivers.name,
+        driverCode: drivers.code,
+        hoursRemaining: drivers.monthlyHoursRemaining,
+        status: assignments.status,
+        assignedDate: assignments.assignedDate,
+      })
+      .from(assignments)
+      .leftJoin(routes, eq(assignments.routeId, routes.id))
+      .leftJoin(drivers, eq(assignments.driverId, drivers.id))
+      .where(
+        and(
+          gte(assignments.assignedDate, startDate),
+          lte(assignments.assignedDate, endDate)
+        )
+      );
+
+    return result.map(row => ({
+      id: row.id,
+      routeNumber: row.routeNumber || "",
+      routeDescription: row.routeDescription || "",
+      routeHours: row.routeHours || "0",
+      driverId: row.driverId,
+      driverName: row.driverName,
+      driverCode: row.driverCode,
+      hoursRemaining: row.hoursRemaining,
+      status: row.status,
+      assignedDate: row.assignedDate.toISOString(),
+    }));
+  }
+
+  async createAssignment(insertAssignment: InsertAssignment): Promise<Assignment> {
+    const [assignment] = await db
+      .insert(assignments)
+      .values(insertAssignment)
+      .returning();
+    return assignment;
+  }
+
+  async updateAssignment(id: number, insertAssignment: Partial<InsertAssignment>): Promise<Assignment | undefined> {
+    const [assignment] = await db
+      .update(assignments)
+      .set(insertAssignment)
+      .where(eq(assignments.id, id))
+      .returning();
+    return assignment || undefined;
+  }
+
+  async deleteAssignment(id: number): Promise<boolean> {
+    const result = await db
+      .delete(assignments)
+      .where(eq(assignments.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  async createBulkAssignments(insertAssignments: InsertAssignment[]): Promise<Assignment[]> {
+    const results = await db
+      .insert(assignments)
+      .values(insertAssignments)
+      .returning();
+    return results;
+  }
+}
+
+export const storage = new DatabaseStorage();
