@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,8 @@ import {
   UserX,
   ArrowUpDown
 } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { RouteAssignmentView } from "@shared/schema";
 
 interface RouteTableProps {
@@ -43,6 +46,28 @@ export default function RouteTable({
   const [searchTerm, setSearchTerm] = useState("");
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const { toast } = useToast();
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return await apiRequest("DELETE", `/api/assignments/${id}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Assignment deleted",
+        description: "The assignment has been successfully removed.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
+      onRefresh();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete assignment. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const filteredAssignments = assignments.filter(assignment => 
     assignment.routeNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -342,6 +367,8 @@ export default function RouteTable({
                         variant="ghost"
                         size="sm"
                         className="text-destructive hover:text-destructive/80"
+                        onClick={() => deleteMutation.mutate(assignment.id)}
+                        disabled={deleteMutation.isPending}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
