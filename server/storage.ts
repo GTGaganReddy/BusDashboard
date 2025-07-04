@@ -160,7 +160,7 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Update all affected drivers
-      for (const driverName of driversToUpdate) {
+      for (const driverName of Array.from(driversToUpdate)) {
         await this.updateDriverRemainingHours(driverName);
       }
       
