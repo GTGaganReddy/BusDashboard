@@ -34,6 +34,14 @@ export interface IStorage {
   
   // Batch operations
   createBulkAssignments(assignments: InsertAssignment[]): Promise<Assignment[]>;
+  
+  // Monthly tracking operations
+  calculateMonthlyHours(driverName: string, year: number, month: number): Promise<{
+    totalHours: number;
+    hoursUsed: number;
+    hoursRemaining: number;
+  }>;
+  updateDriverMonthlyHours(driverName: string, totalHours: number): Promise<void>;
 }
 
 // MemStorage removed - using DatabaseStorage only
@@ -151,7 +159,125 @@ export class DatabaseStorage implements IStorage {
       .insert(assignments)
       .values(assignmentsWithNulls)
       .returning();
+    
+    // Update driver monthly hours after creating assignments
+    for (const assignment of results) {
+      if (assignment.driverName) {
+        await this.updateDriverRemainingHours(assignment.driverName);
+      }
+    }
+    
     return results;
+  }
+
+  async calculateMonthlyHours(driverName: string, year: number, month: number): Promise<{
+    totalHours: number;
+    hoursUsed: number;
+    hoursRemaining: number;
+  }> {
+    // Get driver's monthly total hours
+    const [driver] = await db
+      .select()
+      .from(drivers)
+      .where(eq(drivers.name, driverName))
+      .limit(1);
+    
+    if (!driver) {
+      return { totalHours: 0, hoursUsed: 0, hoursRemaining: 0 };
+    }
+    
+    const totalHours = parseFloat(driver.monthlyHoursTotal || "0");
+    
+    // Calculate start and end of month
+    const startOfMonth = new Date(year, month - 1, 1);
+    const endOfMonth = new Date(year, month, 0, 23, 59, 59);
+    
+    // Get all assignments for this driver in the month
+    const monthlyAssignments = await db
+      .select()
+      .from(assignments)
+      .where(
+        and(
+          eq(assignments.driverName, driverName),
+          gte(assignments.assignedDate, startOfMonth),
+          lte(assignments.assignedDate, endOfMonth),
+          eq(assignments.status, "assigned")
+        )
+      );
+    
+    // Sum up hours used
+    const hoursUsed = monthlyAssignments.reduce((sum, assignment) => {
+      return sum + parseFloat(assignment.routeHours || "0");
+    }, 0);
+    
+    const hoursRemaining = Math.max(0, totalHours - hoursUsed);
+    
+    return {
+      totalHours,
+      hoursUsed,
+      hoursRemaining
+    };
+  }
+
+  async updateDriverMonthlyHours(driverName: string, totalHours: number): Promise<void> {
+    // Create driver if doesn't exist
+    const [existingDriver] = await db
+      .select()
+      .from(drivers)
+      .where(eq(drivers.name, driverName))
+      .limit(1);
+    
+    if (!existingDriver) {
+      const code = driverName.replace(/\s+/g, '').substring(0, 8).toUpperCase();
+      await db
+        .insert(drivers)
+        .values({
+          name: driverName,
+          code,
+          monthlyHoursTotal: totalHours.toString(),
+          monthlyHoursRemaining: totalHours.toString()
+        });
+    } else {
+      await db
+        .update(drivers)
+        .set({ monthlyHoursTotal: totalHours.toString() })
+        .where(eq(drivers.name, driverName));
+    }
+    
+    // Update remaining hours
+    await this.updateDriverRemainingHours(driverName);
+  }
+
+  private async updateDriverRemainingHours(driverName: string): Promise<void> {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    
+    const monthlyData = await this.calculateMonthlyHours(driverName, currentYear, currentMonth);
+    
+    // Create driver if doesn't exist
+    const [existingDriver] = await db
+      .select()
+      .from(drivers)
+      .where(eq(drivers.name, driverName))
+      .limit(1);
+    
+    if (!existingDriver) {
+      const code = driverName.replace(/\s+/g, '').substring(0, 8).toUpperCase();
+      await db
+        .insert(drivers)
+        .values({
+          name: driverName,
+          code,
+          monthlyHoursTotal: "160", // Default monthly hours
+          monthlyHoursRemaining: monthlyData.hoursRemaining.toString()
+        });
+    } else {
+      await db
+        .update(drivers)
+        .set({ monthlyHoursRemaining: monthlyData.hoursRemaining.toString() })
+        .where(eq(drivers.name, driverName));
+    }
   }
 }
 

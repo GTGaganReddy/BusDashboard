@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import WeeklyNavigation from "@/components/weekly-navigation";
 import RouteTable from "@/components/route-table";
 import SummaryCards from "@/components/summary-cards";
+import MonthlyHoursTracker from "@/components/monthly-hours-tracker";
 import type { RouteAssignmentView } from "@shared/schema";
 
 export default function Dashboard() {
@@ -182,6 +183,39 @@ export default function Dashboard() {
 
         {/* Summary Cards */}
         <SummaryCards stats={stats} isLoading={statsLoading} />
+
+        {/* Monthly Hours Tracking */}
+        <Card className="mt-6">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+              <div>
+                <h2 className="text-lg font-medium text-secondary">
+                  Monthly Hours Tracking
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Track and manage driver monthly hours allocation
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {assignments && assignments.length > 0 ? (
+                // Get unique driver names from assignments
+                Array.from(new Set(assignments.map(a => a.driverName).filter((name): name is string => name !== null)))
+                  .map(driverName => (
+                    <MonthlyHoursTracker 
+                      key={driverName} 
+                      driverName={driverName!} 
+                    />
+                  ))
+              ) : (
+                <div className="col-span-full text-center text-muted-foreground py-8">
+                  No drivers found. Add some assignments to track monthly hours.
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

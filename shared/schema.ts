@@ -6,6 +6,7 @@ export const drivers = pgTable("drivers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   code: text("code").notNull().unique(),
+  monthlyHoursTotal: decimal("monthly_hours_total", { precision: 5, scale: 2 }).notNull().default("160"), // Standard monthly working hours
   monthlyHoursRemaining: decimal("monthly_hours_remaining", { precision: 5, scale: 2 }).notNull(),
   status: text("status").notNull().default("active"), // active, inactive, critical, low
 });

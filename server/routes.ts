@@ -174,6 +174,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get monthly hours for a driver
+  app.get("/api/drivers/:name/monthly-hours", async (req, res) => {
+    try {
+      const { name } = req.params;
+      const { year, month } = req.query;
+      
+      const currentYear = year ? parseInt(year as string) : new Date().getFullYear();
+      const currentMonth = month ? parseInt(month as string) : new Date().getMonth() + 1;
+      
+      const monthlyData = await storage.calculateMonthlyHours(decodeURIComponent(name), currentYear, currentMonth);
+      res.json(monthlyData);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch monthly hours" });
+    }
+  });
+
+  // Update driver monthly hours total
+  app.put("/api/drivers/:name/monthly-hours", async (req, res) => {
+    try {
+      const { name } = req.params;
+      const { totalHours } = req.body;
+      
+      if (!totalHours || isNaN(parseFloat(totalHours))) {
+        return res.status(400).json({ error: "Invalid totalHours value" });
+      }
+      
+      await storage.updateDriverMonthlyHours(decodeURIComponent(name), parseFloat(totalHours));
+      res.json({ message: "Monthly hours updated successfully" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update monthly hours" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
