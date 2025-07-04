@@ -162,7 +162,7 @@ export default function SyncManager() {
     <Card className="w-full">
       <CardHeader>
         <div className="flex items-center space-x-2">
-          <Sync className="w-5 h-5" />
+          <RotateCcw className="w-5 h-5" />
           <CardTitle>Driver Hours Sync Manager</CardTitle>
         </div>
         <CardDescription>
