@@ -7,8 +7,6 @@ import WeeklyNavigation from "@/components/weekly-navigation";
 import RouteTable from "@/components/route-table";
 import SummaryCards from "@/components/summary-cards";
 import MonthlyHoursTracker from "@/components/monthly-hours-tracker";
-import SyncManager from "@/components/sync-manager";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { RouteAssignmentView } from "@shared/schema";
 
 export default function Dashboard() {
