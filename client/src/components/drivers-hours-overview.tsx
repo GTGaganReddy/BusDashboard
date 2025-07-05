@@ -13,15 +13,44 @@ interface Driver {
   status: string;
 }
 
-export default function DriversHoursOverview() {
+interface DriversHoursOverviewProps {
+  selectedDate: Date;
+}
+
+export default function DriversHoursOverview({ selectedDate }: DriversHoursOverviewProps) {
+  const year = selectedDate.getFullYear();
+  const month = selectedDate.getMonth() + 1;
+  
   const { data: drivers, isLoading, error } = useQuery({
-    queryKey: ["/api/drivers"],
+    queryKey: ["/api/drivers", year, month],
     queryFn: async () => {
       const response = await fetch("/api/drivers");
       if (!response.ok) {
         throw new Error('Failed to fetch drivers');
       }
-      return response.json();
+      const driversData = await response.json();
+      
+      // Fetch monthly hours for each driver for the selected month
+      const driversWithMonthlyHours = await Promise.all(
+        driversData.map(async (driver: any) => {
+          try {
+            const monthlyResponse = await fetch(`/api/drivers/${encodeURIComponent(driver.name)}/monthly-hours?year=${year}&month=${month}`);
+            if (monthlyResponse.ok) {
+              const monthlyData = await monthlyResponse.json();
+              return {
+                ...driver,
+                monthlyHoursTotal: monthlyData.totalHours.toString(),
+                monthlyHoursRemaining: monthlyData.hoursRemaining.toString()
+              };
+            }
+          } catch (e) {
+            // Keep original data if monthly hours fetch fails
+          }
+          return driver;
+        })
+      );
+      
+      return driversWithMonthlyHours;
     },
   });
 

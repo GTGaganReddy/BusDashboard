@@ -188,7 +188,7 @@ export default function Dashboard() {
         <SummaryCards stats={stats} isLoading={statsLoading} />
 
         {/* Driver Hours Overview */}
-        <DriversHoursOverview />
+        <DriversHoursOverview selectedDate={selectedDate} />
 
         {/* OR Tools Optimizer */}
         <ORToolsOptimizer />
