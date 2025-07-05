@@ -129,6 +129,8 @@ export class ORToolsSync {
       
       // Use your OR Tools API - update each driver individually using PUT /drivers/<name>
       const updatePromises = updates.map(async (update) => {
+        console.log(`Attempting to update driver: "${update.driverName}" with ${update.newRemainingHours} hours`);
+        
         const response = await fetch(`${this.config.baseUrl}/drivers/${encodeURIComponent(update.driverName)}`, {
           method: 'PUT',
           headers,
@@ -139,18 +141,34 @@ export class ORToolsSync {
         });
         
         if (!response.ok) {
-          throw new Error(`Failed to update driver ${update.driverName}: ${response.status}`);
+          const errorText = await response.text();
+          console.error(`Failed to update driver "${update.driverName}": ${response.status} - ${errorText}`);
+          throw new Error(`Failed to update driver ${update.driverName}: ${response.status} - ${errorText}`);
         }
         
-        return response.json();
+        const result = await response.json();
+        console.log(`Successfully updated driver "${update.driverName}":`, result);
+        return result;
       });
       
-      await Promise.all(updatePromises);
+      const results = await Promise.allSettled(updatePromises);
       
-      console.log(`Successfully synced ${updates.length} driver updates to OR tools:`, 
-                  updates.map(u => `${u.driverName}: ${u.currentHours} → ${u.newRemainingHours}`));
+      // Count successful updates
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failedCount = results.filter(r => r.status === 'rejected').length;
       
-      return true;
+      if (failedCount > 0) {
+        console.error(`Sync partially failed: ${successCount} successful, ${failedCount} failed`);
+        results.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            console.error(`Failed to sync driver "${updates[index].driverName}":`, result.reason);
+          }
+        });
+      }
+      
+      console.log(`Successfully synced ${successCount}/${updates.length} driver updates to OR tools`);
+      
+      return failedCount === 0;
     } catch (error) {
       console.error('Failed to sync driver updates to OR tools:', error);
       throw error;
