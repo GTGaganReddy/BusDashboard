@@ -214,6 +214,12 @@ export async function applyORToolsSolution(solution: ORToolsResult, assignedDate
     throw new Error('Cannot apply non-optimal solution');
   }
   
+  // Check for existing assignments on this date to prevent duplicates
+  const existingAssignments = await storage.getAssignmentsByDateRange(assignedDate, assignedDate);
+  if (existingAssignments.length > 0) {
+    throw new Error(`Assignments already exist for ${assignedDate.toISOString().split('T')[0]}. Please delete existing assignments first.`);
+  }
+  
   // Get route and driver data for mapping
   const [routes, drivers] = await Promise.all([
     storage.getRoutes(),

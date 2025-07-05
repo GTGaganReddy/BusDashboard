@@ -337,6 +337,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const date = new Date(assignedDate);
       
+      // Check for existing assignments on this date to prevent duplicates
+      const existingAssignments = await storage.getAssignmentsByDateRange(date, date);
+      if (existingAssignments.length > 0) {
+        return res.status(400).json({ 
+          error: `Assignments already exist for ${date.toISOString().split('T')[0]}`,
+          details: `Found ${existingAssignments.length} existing assignments. Please delete them first or choose a different date.`
+        });
+      }
+      
       // Convert assignments to database format
       const dbAssignments = assignments.map((assignment: any) => ({
         routeNumber: assignment.route_name.split(' - ')[0] || assignment.route_name,
@@ -448,29 +457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Apply OR Tools solution to database
-  app.post("/api/ortools/apply", async (req, res) => {
-    try {
-      const { solution, assignedDate } = req.body;
-      
-      if (!solution || !assignedDate) {
-        return res.status(400).json({ error: "Solution and assignedDate are required" });
-      }
-      
-      const date = new Date(assignedDate);
-      await applyORToolsSolution(solution, date);
-      
-      res.json({ 
-        message: "Solution applied successfully",
-        assignedDate: date.toISOString().split('T')[0]
-      });
-    } catch (error) {
-      res.status(500).json({ 
-        error: "Failed to apply solution",
-        details: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
+
 
   // Get OR Tools documentation
   app.get("/api/ortools", async (req, res) => {
