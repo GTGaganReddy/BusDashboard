@@ -196,15 +196,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBulkAssignments(insertAssignments: InsertAssignment[]): Promise<Assignment[]> {
-    const assignmentsWithNulls = insertAssignments.map(assignment => ({
-      ...assignment,
-      routeId: null, // Not using related tables anymore
-      driverId: null  // Not using related tables anymore
-    }));
+    // Calculate remaining hours for each assignment
+    const assignmentsWithHours = await Promise.all(
+      insertAssignments.map(async (assignment) => {
+        let driverHoursRemaining = null;
+        
+        if (assignment.driverName) {
+          const assignedDate = assignment.assignedDate;
+          const monthlyHours = await this.calculateMonthlyHours(
+            assignment.driverName, 
+            assignedDate.getFullYear(), 
+            assignedDate.getMonth() + 1
+          );
+          
+          // Calculate remaining hours after this assignment
+          const routeHours = parseFloat(assignment.routeHours);
+          driverHoursRemaining = (monthlyHours.hoursRemaining - routeHours).toString();
+        }
+        
+        return {
+          ...assignment,
+          routeId: null, // Not using related tables anymore
+          driverId: null, // Not using related tables anymore
+          driverHoursRemaining
+        };
+      })
+    );
     
     const results = await db
       .insert(assignments)
-      .values(assignmentsWithNulls)
+      .values(assignmentsWithHours)
       .returning();
     
     // Update driver monthly hours after creating assignments
@@ -213,8 +234,6 @@ export class DatabaseStorage implements IStorage {
         await this.updateDriverRemainingHours(assignment.driverName);
       }
     }
-    
-    // Note: OR tools synchronization removed - system is now integrated
     
     return results;
   }
