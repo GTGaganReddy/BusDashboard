@@ -164,11 +164,7 @@ export class DatabaseStorage implements IStorage {
         await this.updateDriverRemainingHours(driverName);
       }
       
-      // Trigger OR tools synchronization if any drivers were affected
-      if (driversToUpdate.size > 0) {
-        const { triggerORToolsSync } = await import('./sync-or-tools');
-        await triggerORToolsSync();
-      }
+      // Note: OR tools synchronization removed - system is now integrated
     }
     
     return assignment || undefined;
@@ -193,9 +189,7 @@ export class DatabaseStorage implements IStorage {
     if (deleted && assignmentToDelete?.driverName) {
       await this.updateDriverRemainingHours(assignmentToDelete.driverName);
       
-      // Trigger OR tools synchronization
-      const { triggerORToolsSync } = await import('./sync-or-tools');
-      await triggerORToolsSync();
+      // Note: OR tools synchronization removed - system is now integrated
     }
     
     return deleted;
@@ -220,9 +214,7 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
-    // Trigger OR tools synchronization
-    const { triggerORToolsSync } = await import('./sync-or-tools');
-    await triggerORToolsSync();
+    // Note: OR tools synchronization removed - system is now integrated
     
     return results;
   }

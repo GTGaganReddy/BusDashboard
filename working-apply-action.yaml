@@ -1,0 +1,45 @@
+openapi: 3.0.0
+info:
+  title: Apply Route Assignments
+  version: 1.0.0
+servers:
+  - url: https://5ead40e0-94db-4e13-b32d-b48000528c25-00-eecmz5446ewu.picard.replit.dev
+paths:
+  /api/ortools/apply:
+    post:
+      summary: Apply finalized driver-route assignments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                assignments:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      driver_name:
+                        type: string
+                      route_name:
+                        type: string
+                      route_hours:
+                        type: number
+                    required: [driver_name, route_name, route_hours]
+                assignedDate:
+                  type: string
+                  format: date
+              required: [assignments, assignedDate]
+      responses:
+        '200':
+          description: Assignment confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  assignmentsCreated:
+                    type: integer
