@@ -255,66 +255,88 @@ def update_driver_hours(drivers, assignments):
     return updated_drivers
 
 
-def main():
+# Example usage function
+def example_usage():
     """
-    Main function to handle command-line interface for OR-Tools operations.
+    Example of how to use the driver assignment solver for daily assignments.
     """
-    import sys
+    # Example: Day 1 assignment
+    sample_data = {
+        "drivers": [
+            {
+                "name": "Driver A",
+                "available_hours": 160
+            },  # Monthly remaining hours
+            {
+                "name": "Driver B",
+                "available_hours": 150
+            },
+            {
+                "name": "Driver C",
+                "available_hours": 140
+            }
+        ],
+        "routes": [
+            {
+                "name": "Route 1",
+                "hours": 8
+            },  # Daily route
+            {
+                "name": "Route 2",
+                "hours": 6
+            },
+            {
+                "name": "Route 3",
+                "hours": 7
+            }
+        ]
+    }
 
-    if len(sys.argv) < 2:
-        print("Error: Operation not specified")
-        sys.exit(1)
+    print("=== Day 1 Assignment ===")
 
-    operation = sys.argv[1]
+    # Validate input
+    is_valid, error_msg = validate_assignment_input(sample_data)
+    if not is_valid:
+        print(f"Validation error: {error_msg}")
+        return
 
-    if operation == "square":
-        if len(sys.argv) < 3:
-            print("Error: Number not specified")
-            sys.exit(1)
-        try:
-            number = float(sys.argv[2])
-            result = square_number(number)
-            print(json.dumps({"result": result}))
-        except ValueError:
-            print("Error: Invalid number")
-            sys.exit(1)
+    # Solve the problem
+    result = solve_driver_assignment(sample_data)
 
-    elif operation == "solve_assignment":
-        # Read JSON from stdin
-        input_data = sys.stdin.read()
-        try:
-            data = json.loads(input_data)
-            
-            # Validate input
-            is_valid, error_msg = validate_assignment_input(data)
-            if not is_valid:
-                print(json.dumps({"status": "error", "message": error_msg}))
-                sys.exit(1)
-            
-            result = solve_driver_assignment(data)
-            print(json.dumps(result))
-        except json.JSONDecodeError:
-            print("Error: Invalid JSON input")
-            sys.exit(1)
-        except Exception as e:
-            print(json.dumps({"status": "error", "message": str(e)}))
-            sys.exit(1)
+    if result['status'] == 'optimal':
+        print("Solution found!")
+        print(
+            f"Routes assigned: {result['statistics']['routes_assigned']}/{result['statistics']['total_routes']}"
+        )
 
-    elif operation == "validate":
-        # Read JSON from stdin
-        input_data = sys.stdin.read()
-        try:
-            data = json.loads(input_data)
-            is_valid, error_msg = validate_assignment_input(data)
-            print(json.dumps({"valid": is_valid, "message": error_msg}))
-        except json.JSONDecodeError:
-            print("Error: Invalid JSON input")
-            sys.exit(1)
+        # Print assignments
+        for assignment in result['assignments']:
+            print(
+                f"  {assignment['driver_name']} -> {assignment['route_name']} ({assignment['route_hours']} hours)"
+            )
+
+        # Print driver status
+        print("\nDriver Status after Day 1:")
+        for driver in result['driver_status']:
+            status = f"Working: {driver['assigned_route']}" if driver[
+                'assigned_route'] else "Available"
+            print(
+                f"  {driver['name']}: {status}, Remaining: {driver['remaining_hours']} hours"
+            )
+
+        # Update drivers for next day
+        updated_drivers = update_driver_hours(sample_data['drivers'],
+                                              result['assignments'])
+
+        print("\n=== Updated Driver Hours for Day 2 ===")
+        for driver in updated_drivers:
+            print(
+                f"  {driver['name']}: {driver['available_hours']} hours remaining"
+            )
 
     else:
-        print(f"Error: Unknown operation '{operation}'")
-        sys.exit(1)
+        print(f"No solution found: {result['message']}")
 
 
 if __name__ == "__main__":
-    main()
+    example_usage()

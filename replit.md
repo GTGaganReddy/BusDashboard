@@ -104,22 +104,25 @@ The system uses three main entities:
 
 Preferred communication style: Simple, everyday language.
 
-## OR Tools Optimization Algorithm
+## OR-Tools Mathematical Optimization
 
-The system uses a smart greedy optimization algorithm that balances efficiency and fairness:
+The system uses Google OR-Tools library for mathematical optimization with guaranteed optimal solutions:
 
-### Algorithm Features
-- **Fairness Priority**: Drivers with more monthly hours get preference to balance workload
-- **Efficiency Focus**: Assigns longest routes first to maximize successful placements
-- **One Route Per Driver**: Realistic constraint for daily assignments
-- **Capacity Checking**: Ensures drivers have sufficient hours for assigned routes
-- **Transparent Results**: Shows unassigned routes and remaining hours
+### Mathematical Model
+- **Binary Variables**: x[i,j] = 1 if driver i assigned to route j, 0 otherwise
+- **Linear Programming**: Uses SCIP solver for optimal assignment calculation
+- **Constraint Programming**: Enforces business rules mathematically
 
-### Scoring System
-For each route, the algorithm calculates a score for each eligible driver:
-- Hours Score: driver_hours / total_available_hours
-- Assignment Bonus: 0.1 for unassigned drivers
-- Final assignment goes to highest-scoring driver
+### Constraints
+1. **Route Coverage**: Each route assigned to exactly one driver
+2. **Driver Capacity**: Each driver assigned to at most one route per day  
+3. **Hour Limits**: Driver's assigned hours ≤ their remaining monthly hours
+
+### Objective Function
+Maximize weighted assignments where weights prioritize drivers with more remaining hours:
+- Weight = driver_available_hours / total_available_hours
+- Ensures even workload distribution across the month
+- Optimal balance between efficiency and fairness
 
 ### Three-Step Workflow
 1. **Pull Hours**: GET /api/drivers to retrieve current monthly hours
@@ -145,3 +148,4 @@ Changelog:
 - July 05, 2025. Created comprehensive GPT assistant API for LibreChat integration with intelligent workflow management
 - July 05, 2025. Implemented complete optimization workflow: analyze → optimize → balance → apply → recommend
 - July 05, 2025. Simplified OR Tools workflow to 3-step process: pull hours → optimize → apply assignments
+- July 05, 2025. Implemented real Google OR-Tools mathematical optimization with SCIP solver for guaranteed optimal solutions
