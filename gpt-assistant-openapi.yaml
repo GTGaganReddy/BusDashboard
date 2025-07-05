@@ -1,0 +1,371 @@
+openapi: 3.0.0
+info:
+  title: Driver Route Optimization API
+  description: Comprehensive API for GPT assistant to manage driver route assignments with intelligent OR Tools optimization
+  version: 1.0.0
+  contact:
+    name: Route Optimization System
+    description: Intelligent driver assignment with monthly balance optimization
+
+servers:
+  - url: https://your-app.replit.app/api
+    description: Production server (replace with your actual Replit URL)
+  - url: http://localhost:5000/api
+    description: Development server
+
+paths:
+  /ortools/solve:
+    post:
+      summary: Solve Optimal Route Assignment
+      description: Uses OR Tools to find optimal driver-route assignments considering monthly hour balance
+      operationId: solveOptimalAssignment
+      responses:
+        '200':
+          description: Optimization completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OptimizationResult'
+        '500':
+          description: Optimization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /ortools/apply:
+    post:
+      summary: Apply Optimization Results
+      description: Saves the optimized assignments to database and updates driver hours
+      operationId: applyOptimization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                solution:
+                  $ref: '#/components/schemas/OptimizationResult'
+                assignedDate:
+                  type: string
+                  format: date
+                  description: Date for the assignments (YYYY-MM-DD)
+              required:
+                - solution
+                - assignedDate
+      responses:
+        '200':
+          description: Solution applied successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Solution applied successfully"
+        '400':
+          description: Invalid request
+        '500':
+          description: Application failed
+
+  /ortools/drivers:
+    get:
+      summary: Get Available Drivers
+      description: Returns all drivers with their current available hours for optimization
+      operationId: getAvailableDrivers
+      responses:
+        '200':
+          description: List of available drivers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DriverAvailability'
+
+  /ortools/routes:
+    get:
+      summary: Get Available Routes
+      description: Returns all routes that need to be assigned
+      operationId: getAvailableRoutes
+      responses:
+        '200':
+          description: List of available routes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RouteRequirement'
+
+  /drivers:
+    get:
+      summary: Get All Drivers
+      description: Returns complete driver information including monthly hours tracking
+      operationId: getAllDrivers
+      responses:
+        '200':
+          description: List of all drivers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Driver'
+
+  /assignments:
+    get:
+      summary: Get Current Assignments
+      description: Returns all current route assignments
+      operationId: getCurrentAssignments
+      responses:
+        '200':
+          description: List of current assignments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Assignment'
+
+  /dashboard/stats:
+    get:
+      summary: Get Dashboard Statistics
+      description: Returns key metrics for the dashboard
+      operationId: getDashboardStats
+      responses:
+        '200':
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStats'
+
+components:
+  schemas:
+    OptimizationResult:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [optimal, infeasible, error]
+          description: Status of the optimization
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/RouteAssignment'
+        driver_status:
+          type: array
+          items:
+            $ref: '#/components/schemas/DriverStatus'
+        unassigned_routes:
+          type: array
+          items:
+            type: string
+        statistics:
+          $ref: '#/components/schemas/OptimizationStats'
+        objective_value:
+          type: number
+          description: Total hours assigned (optimization objective)
+
+    RouteAssignment:
+      type: object
+      properties:
+        driver_name:
+          type: string
+          description: Name of the assigned driver
+        route_name:
+          type: string
+          description: Name of the assigned route
+        route_hours:
+          type: number
+          description: Hours required for this route
+
+    DriverStatus:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Driver name
+        assigned_route:
+          type: string
+          nullable: true
+          description: Route assigned to this driver (null if not assigned)
+        assigned_hours:
+          type: number
+          description: Hours assigned to this driver
+        remaining_hours:
+          type: number
+          description: Monthly hours remaining after assignment
+
+    OptimizationStats:
+      type: object
+      properties:
+        total_routes:
+          type: integer
+          description: Total number of routes
+        routes_assigned:
+          type: integer
+          description: Number of routes successfully assigned
+        routes_unassigned:
+          type: integer
+          description: Number of routes not assigned
+        total_hours_assigned:
+          type: number
+          description: Total hours assigned across all routes
+        drivers_working:
+          type: integer
+          description: Number of drivers with assignments
+        drivers_available:
+          type: integer
+          description: Total number of available drivers
+
+    DriverAvailability:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Driver name
+        available_hours:
+          type: number
+          description: Monthly hours available for assignment
+
+    RouteRequirement:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Route name/identifier
+        hours:
+          type: number
+          description: Hours required for this route
+
+    Driver:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique driver ID
+        name:
+          type: string
+          description: Driver full name
+        code:
+          type: string
+          description: Driver code/identifier
+        monthlyHoursTotal:
+          type: string
+          description: Total monthly hours allocation
+        monthlyHoursRemaining:
+          type: string
+          description: Remaining monthly hours
+        status:
+          type: string
+          enum: [active, critical, low]
+          description: Driver status based on remaining hours
+
+    Assignment:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Assignment ID
+        routeNumber:
+          type: string
+          description: Route number
+        routeDescription:
+          type: string
+          description: Route description
+        driverName:
+          type: string
+          nullable: true
+          description: Assigned driver name
+        assignedDate:
+          type: string
+          format: date
+          description: Date of assignment
+
+    DashboardStats:
+      type: object
+      properties:
+        totalRoutes:
+          type: integer
+          description: Total number of routes
+        activeDrivers:
+          type: integer
+          description: Number of active drivers
+        totalHours:
+          type: number
+          description: Total hours across all routes
+        criticalDrivers:
+          type: integer
+          description: Number of drivers with critical hour status
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        details:
+          type: string
+          description: Detailed error information
+
+# GPT Assistant Integration Examples
+x-gpt-assistant-examples:
+  daily_optimization:
+    description: "Optimize routes for a specific day"
+    workflow:
+      - "Get available drivers: GET /ortools/drivers"
+      - "Get available routes: GET /ortools/routes"
+      - "Solve optimization: POST /ortools/solve"
+      - "Apply results: POST /ortools/apply"
+      - "Verify assignments: GET /assignments"
+    prompt_examples:
+      - "Optimize today's route assignments"
+      - "Find the best driver assignments for tomorrow"
+      - "Balance workload across all drivers for January 5th"
+
+  monthly_balance_check:
+    description: "Check driver monthly hour balance"
+    workflow:
+      - "Get all drivers: GET /drivers"
+      - "Analyze remaining hours and status"
+      - "Identify critical or overworked drivers"
+    prompt_examples:
+      - "Which drivers are running low on hours this month?"
+      - "Show me the monthly balance for all drivers"
+      - "Who needs more work assignments?"
+
+  intelligent_recommendations:
+    description: "Provide optimization recommendations"
+    workflow:
+      - "Get dashboard stats: GET /dashboard/stats"
+      - "Get driver availability: GET /ortools/drivers"
+      - "Analyze patterns and suggest improvements"
+    prompt_examples:
+      - "What improvements can we make to our scheduling?"
+      - "How can we better balance driver workloads?"
+      - "Are there any scheduling conflicts I should know about?"
+
+x-librechat-actions:
+  base_url: "https://your-app.replit.app/api"
+  authentication: "none"
+  key_endpoints:
+    - name: "solve_optimization"
+      method: "POST"
+      url: "/ortools/solve"
+      description: "Main endpoint for route optimization"
+    - name: "apply_solution"
+      method: "POST"
+      url: "/ortools/apply"
+      description: "Apply optimization results to database"
+    - name: "get_drivers"
+      method: "GET"
+      url: "/ortools/drivers"
+      description: "Get driver availability"
+    - name: "get_routes"
+      method: "GET"
+      url: "/ortools/routes"
+      description: "Get route requirements"

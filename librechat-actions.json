@@ -1,0 +1,134 @@
+{
+  "name": "Driver Route Optimization Assistant",
+  "description": "Intelligent GPT assistant for optimizing driver route assignments with OR Tools integration",
+  "version": "1.0.0",
+  "actions": [
+    {
+      "name": "optimize_day",
+      "description": "Optimize route assignments for a specific day with intelligent recommendations",
+      "method": "POST",
+      "url": "{BASE_URL}/api/gpt/optimize-day",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "selectedDate": "{date}",
+        "additionalRoutes": "{additional_routes}",
+        "excludeDrivers": "{exclude_drivers}",
+        "priorityRoutes": "{priority_routes}"
+      },
+      "parameters": {
+        "date": {
+          "type": "string",
+          "description": "Date in ISO format (YYYY-MM-DD)",
+          "required": true
+        },
+        "additional_routes": {
+          "type": "array",
+          "description": "Additional routes to add for the day",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "hours": { "type": "number" }
+            }
+          },
+          "required": false
+        },
+        "exclude_drivers": {
+          "type": "array",
+          "description": "List of driver names to exclude from assignments",
+          "items": { "type": "string" },
+          "required": false
+        },
+        "priority_routes": {
+          "type": "array",
+          "description": "Routes that must be assigned first",
+          "items": { "type": "string" },
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "get_monthly_balance",
+      "description": "Get monthly balance report showing driver utilization and remaining hours",
+      "method": "GET",
+      "url": "{BASE_URL}/api/gpt/monthly-balance/{year}/{month}",
+      "parameters": {
+        "year": {
+          "type": "integer",
+          "description": "Year (e.g., 2025)",
+          "required": true
+        },
+        "month": {
+          "type": "integer",
+          "description": "Month (1-12)",
+          "required": true
+        }
+      }
+    },
+    {
+      "name": "get_day_snapshot",
+      "description": "Get current snapshot of a specific day including available drivers and routes",
+      "method": "GET",
+      "url": "{BASE_URL}/api/gpt/day-snapshot/{date}",
+      "parameters": {
+        "date": {
+          "type": "string",
+          "description": "Date in ISO format (YYYY-MM-DD)",
+          "required": true
+        }
+      }
+    }
+  ],
+  "setup_instructions": {
+    "base_url": "Replace {BASE_URL} with your actual server URL (e.g., https://your-app.replit.app)",
+    "authentication": "No authentication required for this version",
+    "usage_examples": [
+      {
+        "scenario": "Daily Route Optimization",
+        "description": "GPT Assistant can analyze available drivers and routes, then create optimal assignments",
+        "example_prompt": "Optimize routes for January 5th, 2025. I need to add a special event route that takes 4 hours and prioritize the downtown circuit route.",
+        "expected_action": "optimize_day with selectedDate=2025-01-05, additionalRoutes=[{name: 'Special Event Route', hours: 4}], priorityRoutes=['RT-001 - Downtown Circuit']"
+      },
+      {
+        "scenario": "Monthly Balance Check",
+        "description": "Review driver utilization and identify who needs more or fewer hours",
+        "example_prompt": "Show me the monthly balance report for January 2025. Which drivers are overworked or underutilized?",
+        "expected_action": "get_monthly_balance with year=2025, month=1"
+      },
+      {
+        "scenario": "Day Planning",
+        "description": "Get current status before making optimization decisions",
+        "example_prompt": "What's the current situation for January 5th? Who's available and what routes need to be assigned?",
+        "expected_action": "get_day_snapshot with date=2025-01-05"
+      }
+    ]
+  },
+  "workflow_description": "The GPT Assistant intelligently manages the complete optimization workflow:\n1. Analyzes available drivers and their monthly hours\n2. Considers route requirements and priorities\n3. Uses OR Tools to find optimal assignments\n4. Balances workload across drivers for fairness\n5. Applies results to database automatically\n6. Provides intelligent recommendations for improvements\n7. Updates driver hours for future optimizations",
+  "response_format": {
+    "optimize_day": {
+      "success": "boolean - Whether optimization was successful",
+      "date": "string - Date that was optimized",
+      "optimization": {
+        "status": "string - 'optimal', 'infeasible', or 'error'",
+        "assignments": "array - List of driver-route assignments",
+        "statistics": "object - Summary statistics",
+        "recommendations": "object - Intelligent suggestions"
+      },
+      "databaseUpdated": "boolean - Whether changes were saved",
+      "message": "string - Human-readable summary"
+    },
+    "get_monthly_balance": {
+      "drivers": "array - Detailed driver utilization data",
+      "summary": "object - Overall monthly statistics"
+    },
+    "get_day_snapshot": {
+      "date": "string - Snapshot date",
+      "availableDrivers": "array - Drivers with available hours",
+      "routes": "array - All routes",
+      "currentAssignments": "array - Existing assignments",
+      "summary": "object - Quick overview statistics"
+    }
+  }
+}

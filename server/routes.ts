@@ -12,6 +12,8 @@ import {
   convertRoutesToORToolsFormat,
   solveDriverAssignment
 } from "./ortools-integration";
+import { optimizeDay, getMonthlyBalanceReport, getDaySnapshot } from './gpt-assistant-api';
+import type { DayOptimizationRequest } from './gpt-assistant-api';
 
 const bulkAssignmentSchema = z.object({
   assignments: z.array(insertAssignmentSchema)
@@ -389,6 +391,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // === GPT ASSISTANT API ENDPOINTS ===
+  
+  // Main endpoint for GPT assistant to optimize a complete day
+  app.post("/api/gpt/optimize-day", async (req, res) => {
+    try {
+      const request = req.body as DayOptimizationRequest;
+      
+      if (!request.selectedDate) {
+        return res.status(400).json({ error: "selectedDate is required" });
+      }
+      
+      const result = await optimizeDay(request);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Failed to optimize day", 
+        details: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
+
+  // Get monthly balance report for all drivers
+  app.get("/api/gpt/monthly-balance/:year/:month", async (req, res) => {
+    try {
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+        return res.status(400).json({ error: "Invalid year or month" });
+      }
+      
+      const report = await getMonthlyBalanceReport(year, month);
+      res.json(report);
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Failed to get monthly balance report", 
+        details: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
+
+  // Get snapshot of current day status
+  app.get("/api/gpt/day-snapshot/:date", async (req, res) => {
+    try {
+      const date = req.params.date;
+      
+      if (!date) {
+        return res.status(400).json({ error: "Date parameter is required" });
+      }
+      
+      const snapshot = await getDaySnapshot(date);
+      res.json(snapshot);
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Failed to get day snapshot", 
+        details: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
+
   // Get current drivers in OR Tools format
   app.get("/api/ortools/drivers", async (req, res) => {
     try {
@@ -452,7 +514,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "POST /api/ortools/validate": "Validate input data for OR Tools",
         "POST /api/ortools/solve": "Solve optimal assignment using current database data",
         "POST /api/ortools/solve-custom": "Solve assignment with custom drivers and routes",
-        "POST /api/ortools/apply": "Apply OR Tools solution to database (requires solution and assignedDate)"
+        "POST /api/ortools/apply": "Apply OR Tools solution to database (requires solution and assignedDate)",
+        "POST /api/gpt/optimize-day": "GPT Assistant: Optimize complete day with intelligent recommendations",
+        "GET /api/gpt/monthly-balance/:year/:month": "GPT Assistant: Get monthly balance report for all drivers",
+        "GET /api/gpt/day-snapshot/:date": "GPT Assistant: Get current day snapshot with drivers and routes"
       },
       "examples": {
         "square": {
