@@ -104,6 +104,36 @@ The system uses three main entities:
 
 Preferred communication style: Simple, everyday language.
 
+## OR Tools Optimization Algorithm
+
+The system uses a smart greedy optimization algorithm that balances efficiency and fairness:
+
+### Algorithm Features
+- **Fairness Priority**: Drivers with more monthly hours get preference to balance workload
+- **Efficiency Focus**: Assigns longest routes first to maximize successful placements
+- **One Route Per Driver**: Realistic constraint for daily assignments
+- **Capacity Checking**: Ensures drivers have sufficient hours for assigned routes
+- **Transparent Results**: Shows unassigned routes and remaining hours
+
+### Scoring System
+For each route, the algorithm calculates a score for each eligible driver:
+- Hours Score: driver_hours / total_available_hours
+- Assignment Bonus: 0.1 for unassigned drivers
+- Final assignment goes to highest-scoring driver
+
+### Three-Step Workflow
+1. **Pull Hours**: GET /api/drivers to retrieve current monthly hours
+2. **Optimize**: POST /api/ortools/optimize with selected drivers and routes
+3. **Apply**: POST /api/ortools/apply to save assignments and update hours
+
+## GPT Assistant Integration
+
+The system provides a simplified LibreChat action configuration that enables:
+- Flexible driver and route selection by GPT assistant
+- Multiple optimization iterations before applying
+- Automatic dashboard updates and hour tracking
+- Intelligent recommendations based on results
+
 ## Changelog
 
 Changelog:
@@ -114,3 +144,4 @@ Changelog:
 - July 05, 2025. Integrated OR Tools optimization directly into dashboard with Python-based algorithms
 - July 05, 2025. Created comprehensive GPT assistant API for LibreChat integration with intelligent workflow management
 - July 05, 2025. Implemented complete optimization workflow: analyze → optimize → balance → apply → recommend
+- July 05, 2025. Simplified OR Tools workflow to 3-step process: pull hours → optimize → apply assignments
