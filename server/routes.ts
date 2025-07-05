@@ -3,6 +3,15 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertAssignmentSchema, insertRouteSchema, insertDriverSchema } from "@shared/schema";
 import { z } from "zod";
+import { 
+  squareNumber,
+  validateORToolsInput,
+  solveOptimalAssignment,
+  applyORToolsSolution,
+  convertDriversToORToolsFormat,
+  convertRoutesToORToolsFormat,
+  solveDriverAssignment
+} from "./ortools-integration";
 
 const bulkAssignmentSchema = z.object({
   assignments: z.array(insertAssignmentSchema)
@@ -297,6 +306,184 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ error: "Failed to get sync status" });
     }
+  });
+
+  // OR Tools Integration Endpoints
+  
+  // Square a number (legacy endpoint)
+  app.post("/api/ortools/square", async (req, res) => {
+    try {
+      const { number } = req.body;
+      
+      if (typeof number !== 'number') {
+        return res.status(400).json({ error: "Number is required" });
+      }
+      
+      const result = await squareNumber(number);
+      res.json({ result });
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Failed to square number",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Validate OR Tools input
+  app.post("/api/ortools/validate", async (req, res) => {
+    try {
+      const validation = await validateORToolsInput(req.body);
+      res.json(validation);
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Failed to validate input",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Solve optimal assignment
+  app.post("/api/ortools/solve", async (req, res) => {
+    try {
+      const result = await solveOptimalAssignment();
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Failed to solve assignment",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Solve custom assignment with provided data
+  app.post("/api/ortools/solve-custom", async (req, res) => {
+    try {
+      const result = await solveDriverAssignment(req.body);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Failed to solve custom assignment",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Apply OR Tools solution to database
+  app.post("/api/ortools/apply", async (req, res) => {
+    try {
+      const { solution, assignedDate } = req.body;
+      
+      if (!solution || !assignedDate) {
+        return res.status(400).json({ error: "Solution and assigned date are required" });
+      }
+
+      const date = new Date(assignedDate);
+      await applyORToolsSolution(solution, date);
+      
+      res.json({ message: "Solution applied successfully" });
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Failed to apply solution", 
+        details: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
+
+  // Get current drivers in OR Tools format
+  app.get("/api/ortools/drivers", async (req, res) => {
+    try {
+      const drivers = await convertDriversToORToolsFormat();
+      res.json(drivers);
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Failed to get drivers",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Get current routes in OR Tools format
+  app.get("/api/ortools/routes", async (req, res) => {
+    try {
+      const routes = await convertRoutesToORToolsFormat();
+      res.json(routes);
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Failed to get routes",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Apply OR Tools solution to database
+  app.post("/api/ortools/apply", async (req, res) => {
+    try {
+      const { solution, assignedDate } = req.body;
+      
+      if (!solution || !assignedDate) {
+        return res.status(400).json({ error: "Solution and assignedDate are required" });
+      }
+      
+      const date = new Date(assignedDate);
+      await applyORToolsSolution(solution, date);
+      
+      res.json({ 
+        message: "Solution applied successfully",
+        assignedDate: date.toISOString().split('T')[0]
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Failed to apply solution",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Get OR Tools documentation
+  app.get("/api/ortools", async (req, res) => {
+    res.json({
+      "title": "OR Tools Driver Assignment API",
+      "description": "Optimal driver route assignment using Google OR-Tools linear solver",
+      "endpoints": {
+        "GET /api/ortools": "This documentation",
+        "GET /api/ortools/drivers": "Get all drivers in OR Tools format",
+        "GET /api/ortools/routes": "Get all routes in OR Tools format",
+        "POST /api/ortools/square": "Square a number (legacy endpoint)",
+        "POST /api/ortools/validate": "Validate input data for OR Tools",
+        "POST /api/ortools/solve": "Solve optimal assignment using current database data",
+        "POST /api/ortools/solve-custom": "Solve assignment with custom drivers and routes",
+        "POST /api/ortools/apply": "Apply OR Tools solution to database (requires solution and assignedDate)"
+      },
+      "examples": {
+        "square": {
+          "method": "POST",
+          "url": "/api/ortools/square",
+          "body": { "number": 5 }
+        },
+        "solve_custom": {
+          "method": "POST", 
+          "url": "/api/ortools/solve-custom",
+          "body": {
+            "drivers": [
+              { "name": "John Doe", "available_hours": 160 },
+              { "name": "Jane Smith", "available_hours": 150 }
+            ],
+            "routes": [
+              { "name": "Route A", "hours": 8 },
+              { "name": "Route B", "hours": 6 }
+            ]
+          }
+        },
+        "apply_solution": {
+          "method": "POST",
+          "url": "/api/ortools/apply", 
+          "body": {
+            "solution": { "status": "optimal", "assignments": [] },
+            "assignedDate": "2025-01-05"
+          }
+        }
+      }
+    });
   });
 
   const httpServer = createServer(app);

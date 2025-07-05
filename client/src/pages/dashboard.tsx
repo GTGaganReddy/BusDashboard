@@ -9,6 +9,7 @@ import SummaryCards from "@/components/summary-cards";
 import MonthlyHoursTracker from "@/components/monthly-hours-tracker";
 import ORToolsSyncConfig from "@/components/or-tools-sync-config";
 import DriversHoursOverview from "@/components/drivers-hours-overview";
+import ORToolsOptimizer from "@/components/ortools-optimizer";
 import type { RouteAssignmentView } from "@shared/schema";
 
 export default function Dashboard() {
@@ -188,6 +189,9 @@ export default function Dashboard() {
 
         {/* Driver Hours Overview */}
         <DriversHoursOverview />
+
+        {/* OR Tools Optimizer */}
+        <ORToolsOptimizer />
 
         {/* Monthly Hours Tracking */}
         <Card className="mt-6">
