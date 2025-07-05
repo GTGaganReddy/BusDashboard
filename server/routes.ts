@@ -397,35 +397,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Solve custom assignment with provided data
-  app.post("/api/ortools/solve-custom", async (req, res) => {
+  // Simple OR Tools optimization - Takes drivers and routes, returns assignments
+  app.post("/api/ortools/optimize", async (req, res) => {
     try {
-      const result = await solveDriverAssignment(req.body);
+      const { drivers, routes } = req.body;
+      
+      if (!drivers || !routes || !Array.isArray(drivers) || !Array.isArray(routes)) {
+        return res.status(400).json({ error: "drivers and routes arrays are required" });
+      }
+      
+      const result = await solveDriverAssignment({ drivers, routes });
       res.json(result);
     } catch (error) {
       res.status(500).json({ 
-        error: "Failed to solve custom assignment",
+        error: "Failed to optimize assignments",
         details: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
 
-  // Apply OR Tools solution to database
+  // Apply assignments to database and update hours
   app.post("/api/ortools/apply", async (req, res) => {
     try {
-      const { solution, assignedDate } = req.body;
+      const { assignments, assignedDate } = req.body;
       
-      if (!solution || !assignedDate) {
-        return res.status(400).json({ error: "Solution and assigned date are required" });
+      if (!assignments || !assignedDate || !Array.isArray(assignments)) {
+        return res.status(400).json({ error: "assignments array and assignedDate are required" });
       }
-
-      const date = new Date(assignedDate);
-      await applyORToolsSolution(solution, date);
       
-      res.json({ message: "Solution applied successfully" });
+      const date = new Date(assignedDate);
+      
+      // Convert assignments to database format
+      const dbAssignments = assignments.map((assignment: any) => ({
+        routeNumber: assignment.route_name.split(' - ')[0] || assignment.route_name,
+        routeDescription: assignment.route_name.split(' - ')[1] || assignment.route_name,
+        routeHours: assignment.route_hours.toString(),
+        driverName: assignment.driver_name,
+        assignedDate: date,
+        status: 'assigned' as const
+      }));
+      
+      // Apply assignments - this will automatically update driver hours
+      await storage.createBulkAssignments(dbAssignments);
+      
+      res.json({ 
+        message: "Assignments applied successfully",
+        assignmentsCreated: dbAssignments.length
+      });
     } catch (error) {
       res.status(500).json({ 
-        error: "Failed to apply solution", 
+        error: "Failed to apply assignments", 
         details: error instanceof Error ? error.message : "Unknown error" 
       });
     }
