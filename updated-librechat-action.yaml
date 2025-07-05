@@ -236,6 +236,100 @@ paths:
                       type: string
                       enum: [active, critical, low]
 
+  /drivers/{name}:
+    get:
+      summary: Get specific driver by name
+      description: Returns driver information including current monthly hours
+      operationId: getDriverByName
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Driver name (e.g., "Lisa Chen", "Mike Rodriguez")
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Driver information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  code:
+                    type: string
+                  monthlyHoursTotal:
+                    type: string
+                  monthlyHoursRemaining:
+                    type: string
+                  status:
+                    type: string
+                    enum: [active, critical, low]
+        '404':
+          description: Driver not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Driver not found"
+
+  /drivers/{name}/monthly-hours:
+    get:
+      summary: Get driver monthly hours breakdown
+      description: Returns detailed monthly hours calculation for specific driver
+      operationId: getDriverMonthlyHours
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Driver name (e.g., "Lisa Chen", "Mike Rodriguez")
+          schema:
+            type: string
+        - name: year
+          in: query
+          required: false
+          description: Year (defaults to current year)
+          schema:
+            type: integer
+            example: 2025
+        - name: month
+          in: query
+          required: false
+          description: Month (1-12, defaults to current month)
+          schema:
+            type: integer
+            example: 7
+      responses:
+        '200':
+          description: Monthly hours breakdown
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  driverName:
+                    type: string
+                  year:
+                    type: integer
+                  month:
+                    type: integer
+                  totalHours:
+                    type: number
+                    description: Total monthly hours allocated
+                  hoursUsed:
+                    type: number
+                    description: Hours already assigned this month
+                  hoursRemaining:
+                    type: number
+                    description: Hours remaining for this month
+
   /assignments:
     get:
       summary: Get current assignments

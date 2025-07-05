@@ -30,6 +30,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get driver by name with monthly hours
+  app.get("/api/drivers/:name", async (req, res) => {
+    try {
+      const driverName = req.params.name;
+      const drivers = await storage.getDrivers();
+      const driver = drivers.find(d => d.name === driverName);
+      
+      if (!driver) {
+        return res.status(404).json({ error: "Driver not found" });
+      }
+      
+      res.json(driver);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch driver" });
+    }
+  });
+
+  // Get driver monthly hours by name
+  app.get("/api/drivers/:name/monthly-hours", async (req, res) => {
+    try {
+      const driverName = req.params.name;
+      const { year, month } = req.query;
+      
+      const currentDate = new Date();
+      const targetYear = year ? parseInt(year as string) : currentDate.getFullYear();
+      const targetMonth = month ? parseInt(month as string) : currentDate.getMonth() + 1;
+      
+      const monthlyData = await storage.calculateMonthlyHours(driverName, targetYear, targetMonth);
+      
+      res.json({
+        driverName,
+        year: targetYear,
+        month: targetMonth,
+        ...monthlyData
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch driver monthly hours" });
+    }
+  });
+
   // Get all routes
   app.get("/api/routes", async (req, res) => {
     try {
