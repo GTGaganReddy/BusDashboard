@@ -70,14 +70,14 @@ async function executeORTools(operation: string, input?: any): Promise<any> {
     });
     
     // For operations that need JSON input, send it via stdin
-    if ((operation === 'solve' || operation === 'validate') && input) {
+    if ((operation === 'solve_assignment' || operation === 'validate') && input) {
       pythonProcess.stdin.write(JSON.stringify(input));
       pythonProcess.stdin.end();
     }
     
     pythonProcess.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error(`Python process exited with code ${code}: ${stderr}`));
+        reject(new Error(`Python process exited with code ${code}. stdout: ${stdout}, stderr: ${stderr}`));
         return;
       }
       
@@ -85,7 +85,7 @@ async function executeORTools(operation: string, input?: any): Promise<any> {
         const result = JSON.parse(stdout.trim());
         resolve(result);
       } catch (error) {
-        reject(new Error(`Failed to parse JSON output: ${stdout}`));
+        reject(new Error(`Failed to parse JSON output: ${stdout}. Error: ${error}`));
       }
     });
     
@@ -128,7 +128,7 @@ export async function validateORToolsInput(input: ORToolsInput): Promise<{ valid
  * Solve driver assignment using OR Tools
  */
 export async function solveDriverAssignment(input: ORToolsInput): Promise<ORToolsResult> {
-  const result = await executeORTools('solve', input);
+  const result = await executeORTools('solve_assignment', input);
   
   if (result.error) {
     throw new Error(result.error);

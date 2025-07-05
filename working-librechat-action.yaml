@@ -1,0 +1,94 @@
+openapi: 3.0.0
+info:
+  title: Optimize Route Assignments
+  version: 1.0.0
+servers:
+  - url: https://5ead40e0-94db-4e13-b32d-b48000528c25-00-eecmz5446ewu.picard.replit.dev
+paths:
+  /api/ortools/optimize:
+    post:
+      summary: Optimize driver-route assignments using OR-Tools
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                drivers:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      available_hours:
+                        type: number
+                    required: [name, available_hours]
+                routes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      hours:
+                        type: number
+                    required: [name, hours]
+              required: [drivers, routes]
+      responses:
+        '200':
+          description: Optimized assignments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [optimal, infeasible, error]
+                  assignments:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        driver_name:
+                          type: string
+                        route_name:
+                          type: string
+                        route_hours:
+                          type: number
+                  driver_status:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        assigned_route:
+                          type: string
+                        assigned_hours:
+                          type: number
+                        remaining_hours:
+                          type: number
+                  unassigned_routes:
+                    type: array
+                    items:
+                      type: string
+                  statistics:
+                    type: object
+                    properties:
+                      total_routes:
+                        type: integer
+                      routes_assigned:
+                        type: integer
+                      routes_unassigned:
+                        type: integer
+                      total_hours_assigned:
+                        type: number
+                      drivers_working:
+                        type: integer
+                      drivers_available:
+                        type: integer
+                  objective_value:
+                    type: number
