@@ -135,9 +135,8 @@ export class ORToolsSync {
           method: 'PUT',
           headers,
           body: JSON.stringify({
-            remaining_hours: update.newRemainingHours,
-            monthly_hours: update.currentHours + update.newRemainingHours, // Total monthly hours
-            // Include any other fields your OR Tools app expects
+            name: update.driverName,
+            monthly_hours: update.newRemainingHours, // Your OR Tools API uses monthly_hours for remaining hours
           }),
         });
         
