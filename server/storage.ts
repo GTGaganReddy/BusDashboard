@@ -210,7 +210,7 @@ export class DatabaseStorage implements IStorage {
           );
           
           // Calculate remaining hours after this assignment
-          const routeHours = parseFloat(assignment.routeHours);
+          const routeHours = parseFloat(assignment.routeHours || "0");
           driverHoursRemaining = (monthlyHours.hoursRemaining - routeHours).toString();
         }
         
@@ -349,6 +349,6 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Temporarily using memory storage due to database connection issues
-import { MemStorage } from "./memory-storage";
+// Temporarily use memory storage due to database connection issues
+import { MemStorage } from './memory-storage';
 export const storage = new MemStorage();
