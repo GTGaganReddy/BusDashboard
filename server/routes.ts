@@ -20,10 +20,37 @@ const bulkAssignmentSchema = z.object({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Get all drivers
+  // Get all drivers with optional monthly hours for specific year/month
   app.get("/api/drivers", async (req, res) => {
     try {
+      const { year, month } = req.query;
       const drivers = await storage.getDrivers();
+      
+      // If year and month are provided, update hours for that specific month
+      if (year && month) {
+        const targetYear = parseInt(year as string);
+        const targetMonth = parseInt(month as string);
+        
+        if (!isNaN(targetYear) && !isNaN(targetMonth) && targetMonth >= 1 && targetMonth <= 12) {
+          const driversWithMonthlyHours = await Promise.all(
+            drivers.map(async (driver) => {
+              try {
+                const monthlyData = await storage.calculateMonthlyHours(driver.name, targetYear, targetMonth);
+                return {
+                  ...driver,
+                  monthlyHoursTotal: monthlyData.totalHours.toString(),
+                  monthlyHoursRemaining: monthlyData.hoursRemaining.toString()
+                };
+              } catch (e) {
+                // Keep original data if calculation fails
+                return driver;
+              }
+            })
+          );
+          return res.json(driversWithMonthlyHours);
+        }
+      }
+      
       res.json(drivers);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch drivers" });
