@@ -150,3 +150,6 @@ Changelog:
 - July 05, 2025. Simplified OR Tools workflow to 3-step process: pull hours → optimize → apply assignments
 - July 05, 2025. Implemented real Google OR-Tools mathematical optimization with SCIP solver for guaranteed optimal solutions
 - July 05, 2025. Removed OR-Tools synchronization functionality - no longer needed with integrated system
+- July 06, 2025. Resolved database connectivity issues and reverted to stable in-memory storage
+- July 06, 2025. Removed May 1st assignment data for clean database start
+- July 06, 2025. Created comprehensive README.md with complete self-hosting instructions and deployment guide

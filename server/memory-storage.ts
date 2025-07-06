@@ -48,69 +48,8 @@ export class MemStorage implements IStorage {
       { id: 5, routeNumber: 'RT-005', description: 'Industrial Zone', hoursRequired: '8.00' }
     ];
 
-    // Initialize May 1st assignments (based on your previous data)
-    this.assignments = [
-      {
-        id: 1,
-        routeId: 1,
-        driverId: 3,
-        assignedDate: new Date('2025-05-01'),
-        status: 'assigned',
-        driverName: 'Lenker 3',
-        routeNumber: 'RT-001',
-        routeDescription: 'Downtown Circuit',
-        routeHours: '11.00',
-        driverHoursRemaining: '163.00'
-      },
-      {
-        id: 2,
-        routeId: 2,
-        driverId: 4,
-        assignedDate: new Date('2025-05-01'),
-        status: 'assigned',
-        driverName: 'Lenker 4',
-        routeNumber: 'RT-002',
-        routeDescription: 'Airport Express',
-        routeHours: '11.00',
-        driverHoursRemaining: '163.00'
-      },
-      {
-        id: 3,
-        routeId: 3,
-        driverId: 5,
-        assignedDate: new Date('2025-05-01'),
-        status: 'assigned',
-        driverName: 'Lenker 5',
-        routeNumber: 'RT-003',
-        routeDescription: 'Mall Connection',
-        routeHours: '11.00',
-        driverHoursRemaining: '163.00'
-      },
-      {
-        id: 4,
-        routeId: 4,
-        driverId: 6,
-        assignedDate: new Date('2025-05-01'),
-        status: 'assigned',
-        driverName: 'Lenker 6',
-        routeNumber: 'RT-004',
-        routeDescription: 'University Route',
-        routeHours: '12.00',
-        driverHoursRemaining: '162.00'
-      },
-      {
-        id: 5,
-        routeId: 5,
-        driverId: 7,
-        assignedDate: new Date('2025-05-01'),
-        status: 'assigned',
-        driverName: 'Lenker 7',
-        routeNumber: 'RT-005',
-        routeDescription: 'Industrial Zone',
-        routeHours: '10.00',
-        driverHoursRemaining: '164.00'
-      }
-    ];
+    // Initialize with no assignments - clean start
+    this.assignments = [];
 
     this.nextDriverId = Math.max(...this.drivers.map(d => d.id)) + 1;
     this.nextRouteId = Math.max(...this.routes.map(r => r.id)) + 1;
