@@ -458,9 +458,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get current drivers in OR Tools format
+  // Get current drivers in OR Tools format with optional date-specific hours
   app.get("/api/ortools/drivers", async (req, res) => {
     try {
+      const { year, month } = req.query;
+      
+      // If year and month are provided, calculate hours for that specific month
+      if (year && month) {
+        const targetYear = parseInt(year as string);
+        const targetMonth = parseInt(month as string);
+        
+        if (!isNaN(targetYear) && !isNaN(targetMonth) && targetMonth >= 1 && targetMonth <= 12) {
+          const drivers = await storage.getDrivers();
+          const ortoolsDrivers = await Promise.all(
+            drivers.map(async (driver) => {
+              try {
+                const monthlyData = await storage.calculateMonthlyHours(driver.name, targetYear, targetMonth);
+                return {
+                  name: driver.name,
+                  available_hours: monthlyData.hoursRemaining
+                };
+              } catch (e) {
+                // Fallback to stored hours if calculation fails
+                return {
+                  name: driver.name,
+                  available_hours: parseFloat(driver.monthlyHoursRemaining)
+                };
+              }
+            })
+          );
+          return res.json(ortoolsDrivers);
+        }
+      }
+      
+      // Default behavior: use current month
       const drivers = await convertDriversToORToolsFormat();
       res.json(drivers);
     } catch (error) {
