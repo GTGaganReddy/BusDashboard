@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { User, Calendar, RefreshCw } from "lucide-react";
+import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import WeeklyNavigation from "@/components/weekly-navigation";
@@ -70,6 +71,9 @@ export default function Dashboard() {
   const handleRefresh = () => {
     refetchAssignments();
     refetchStats();
+    // Invalidate all driver-related queries to show updated hours
+    queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/ortools/drivers"] });
   };
 
   const formatWeekRange = (start: Date) => {

@@ -58,6 +58,8 @@ export default function RouteTable({
         description: "The assignment has been successfully removed.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       onRefresh();
     },
     onError: () => {

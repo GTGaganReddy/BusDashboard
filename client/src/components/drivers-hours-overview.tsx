@@ -22,7 +22,7 @@ export default function DriversHoursOverview({ selectedDate }: DriversHoursOverv
   const month = selectedDate.getMonth() + 1;
   
   const { data: drivers, isLoading, error } = useQuery({
-    queryKey: ["/api/drivers", year, month],
+    queryKey: ["/api/drivers"],
     queryFn: async () => {
       const response = await fetch(`/api/drivers`);
       if (!response.ok) {
@@ -30,7 +30,6 @@ export default function DriversHoursOverview({ selectedDate }: DriversHoursOverv
       }
       return response.json();
     },
-    refetchInterval: 2000, // Refresh every 2 seconds to show updated hours
   });
 
   const getStatusColor = (remaining: number, total: number) => {
