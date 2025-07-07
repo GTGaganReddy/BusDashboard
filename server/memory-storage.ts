@@ -129,6 +129,20 @@ export class MemStorage implements IStorage {
   }
 
   async createAssignment(assignment: InsertAssignment): Promise<Assignment> {
+    // Calculate remaining hours for the driver
+    let driverHoursRemaining = null;
+    if (assignment.driverName) {
+      const driver = this.drivers.find(d => d.name === assignment.driverName);
+      if (driver) {
+        const currentRemaining = parseFloat(driver.monthlyHoursRemaining || '0');
+        const routeHours = parseFloat(assignment.routeHours || '0');
+        driverHoursRemaining = Math.max(0, currentRemaining - routeHours).toFixed(2);
+        
+        // Update driver's remaining hours
+        driver.monthlyHoursRemaining = driverHoursRemaining;
+      }
+    }
+    
     const newAssignment: Assignment = {
       id: this.nextAssignmentId++,
       routeId: null,
@@ -139,7 +153,7 @@ export class MemStorage implements IStorage {
       routeNumber: assignment.routeNumber || null,
       routeDescription: assignment.routeDescription || null,
       routeHours: assignment.routeHours || null,
-      driverHoursRemaining: assignment.driverHoursRemaining || null
+      driverHoursRemaining: driverHoursRemaining
     };
     this.assignments.push(newAssignment);
     return newAssignment;
@@ -162,18 +176,34 @@ export class MemStorage implements IStorage {
   }
 
   async createBulkAssignments(assignments: InsertAssignment[]): Promise<Assignment[]> {
-    const newAssignments: Assignment[] = assignments.map(a => ({
-      id: this.nextAssignmentId++,
-      routeId: null,
-      driverId: null,
-      assignedDate: a.assignedDate,
-      status: (a.status as string) || "pending",
-      driverName: a.driverName || null,
-      routeNumber: a.routeNumber || null,
-      routeDescription: a.routeDescription || null,
-      routeHours: a.routeHours || null,
-      driverHoursRemaining: a.driverHoursRemaining || null
-    }));
+    const newAssignments: Assignment[] = assignments.map(a => {
+      // Calculate remaining hours for the driver
+      let driverHoursRemaining = null;
+      if (a.driverName) {
+        const driver = this.drivers.find(d => d.name === a.driverName);
+        if (driver) {
+          const currentRemaining = parseFloat(driver.monthlyHoursRemaining || '0');
+          const routeHours = parseFloat(a.routeHours || '0');
+          driverHoursRemaining = Math.max(0, currentRemaining - routeHours).toFixed(2);
+          
+          // Update driver's remaining hours
+          driver.monthlyHoursRemaining = driverHoursRemaining;
+        }
+      }
+      
+      return {
+        id: this.nextAssignmentId++,
+        routeId: null,
+        driverId: null,
+        assignedDate: a.assignedDate,
+        status: (a.status as string) || "pending",
+        driverName: a.driverName || null,
+        routeNumber: a.routeNumber || null,
+        routeDescription: a.routeDescription || null,
+        routeHours: a.routeHours || null,
+        driverHoursRemaining: driverHoursRemaining
+      };
+    });
     
     this.assignments.push(...newAssignments);
     return newAssignments;
