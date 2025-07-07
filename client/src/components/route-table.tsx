@@ -271,7 +271,7 @@ export default function RouteTable({
             <TableBody>
               {sortedAssignments.map((assignment, index) => (
                 <TableRow 
-                  key={assignment.id} 
+                  key={assignment.id || `assignment-${index}`} 
                   className={`hover:bg-muted/50 transition-colors ${
                     index % 2 === 1 ? "bg-muted/20" : ""
                   }`}
@@ -367,8 +367,8 @@ export default function RouteTable({
                         variant="ghost"
                         size="sm"
                         className="text-destructive hover:text-destructive/80"
-                        onClick={() => deleteMutation.mutate(assignment.id)}
-                        disabled={deleteMutation.isPending}
+                        onClick={() => assignment.id && deleteMutation.mutate(assignment.id)}
+                        disabled={deleteMutation.isPending || !assignment.id}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

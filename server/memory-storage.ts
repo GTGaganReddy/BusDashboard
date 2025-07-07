@@ -53,7 +53,7 @@ export class MemStorage implements IStorage {
 
     this.nextDriverId = Math.max(...this.drivers.map(d => d.id)) + 1;
     this.nextRouteId = Math.max(...this.routes.map(r => r.id)) + 1;
-    this.nextAssignmentId = Math.max(...this.assignments.map(a => a.id)) + 1;
+    this.nextAssignmentId = this.assignments.length > 0 ? Math.max(...this.assignments.map(a => a.id || 0)) + 1 : 1;
   }
 
   // Driver operations
@@ -170,6 +170,19 @@ export class MemStorage implements IStorage {
   async deleteAssignment(id: number): Promise<boolean> {
     const index = this.assignments.findIndex(a => a.id === id);
     if (index === -1) return false;
+    
+    const assignmentToDelete = this.assignments[index];
+    
+    // Restore driver hours if assignment had a driver
+    if (assignmentToDelete.driverName && assignmentToDelete.routeHours) {
+      const driver = this.drivers.find(d => d.name === assignmentToDelete.driverName);
+      if (driver) {
+        const currentRemaining = parseFloat(driver.monthlyHoursRemaining || '0');
+        const routeHours = parseFloat(assignmentToDelete.routeHours || '0');
+        const restoredHours = currentRemaining + routeHours;
+        driver.monthlyHoursRemaining = restoredHours.toFixed(2);
+      }
+    }
     
     this.assignments.splice(index, 1);
     return true;
