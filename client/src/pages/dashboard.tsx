@@ -162,7 +162,7 @@ export default function Dashboard() {
                 
                 <Button
                   onClick={handleRefresh}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-transform"
                   size="sm"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />

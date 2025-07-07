@@ -113,7 +113,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { startDate, endDate } = req.query;
       
       if (!startDate || !endDate) {
-        return res.status(400).json({ error: "startDate and endDate are required" });
+        // Return all assignments if no date range provided
+        const allAssignments = await storage.getAssignments();
+        const assignmentViews = allAssignments.map(a => ({
+          id: a.id || 0,
+          routeNumber: a.routeNumber || "",
+          routeDescription: a.routeDescription || "",
+          routeHours: a.routeHours || "0",
+          driverId: a.driverId,
+          driverName: a.driverName,
+          driverCode: null,
+          hoursRemaining: a.driverHoursRemaining || "0",
+          status: a.status || "pending",
+          assignedDate: a.assignedDate ? new Date(a.assignedDate).toISOString() : new Date().toISOString()
+        }));
+        return res.json(assignmentViews);
       }
 
       const start = new Date(startDate as string);

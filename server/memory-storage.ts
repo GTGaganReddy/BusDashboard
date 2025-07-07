@@ -48,8 +48,33 @@ export class MemStorage implements IStorage {
       { id: 5, routeNumber: 'RT-005', description: 'Industrial Zone', hoursRequired: '8.00' }
     ];
 
-    // Initialize with no assignments - clean start
-    this.assignments = [];
+    // Initialize with sample assignments for testing
+    this.assignments = [
+      {
+        id: 1,
+        routeId: 1,
+        driverId: 1,
+        assignedDate: new Date("2025-05-01"),
+        status: "assigned",
+        driverName: "Lenker 1",
+        routeNumber: "401mS",
+        routeDescription: "Route 401 Morning Shift",
+        routeHours: "8.00",
+        driverHoursRemaining: "166.00"
+      },
+      {
+        id: 2,
+        routeId: 2,
+        driverId: 2,
+        assignedDate: new Date("2025-05-02"),
+        status: "assigned",
+        driverName: "Lenker 2",
+        routeNumber: "402mS",
+        routeDescription: "Route 402 Morning Shift",
+        routeHours: "9.00",
+        driverHoursRemaining: "146.00"
+      }
+    ];
 
     this.nextDriverId = Math.max(...this.drivers.map(d => d.id)) + 1;
     this.nextRouteId = Math.max(...this.routes.map(r => r.id)) + 1;
